@@ -1,0 +1,138 @@
+!pip install playwright
+!playwright install
+
+%%writefile test_supabets.py
+from playwright.sync_api import sync_playwright
+from collections import namedtuple
+import pytest
+import time
+
+def test_sb():
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        context = browser.new_context()
+        page = context.new_page()
+        page.goto("https://www.supabets.co.za")
+        home_team = "//a/div[@class='plr_1 ng-binding']"
+        div = page.locator(home_team).nth(0)
+        div.wait_for()
+        #div.highlight()
+        #page.screenshot(path='shotx.png', full_page=True)
+        events_list = page.query_selector_all(home_team)
+        Game = namedtuple('Game', ['site', 'home', 'away', 'GG1', 'NG1', 'GG2', 'NG2'])
+        site = "Supabets"
+        gg_h1 = page.locator("//div[contains(text(), 'GG 1HT')]/following-sibling::div[@class='oddValue']")
+        ng_h1 = page.locator("//div[contains(text(), 'NG 1HT')]/following-sibling::div[@class='oddValue']")
+        gg_h2 = page.locator("//div[contains(text(), 'GG 2HT')]/following-sibling::div[@class='oddValue']")
+        ng_h2 = page.locator("//div[contains(text(), 'NG 2HT')]/following-sibling::div[@class='oddValue']")
+
+        sbgames = []
+        #events.highlight()
+        #page.screenshot(path='shotx2.png', full_page=True)
+        events = events_list[:10]
+        for index in range(len(events)):
+
+          event = events[index]
+          event.click()
+          homename = page.locator("//div[@class='subeventItem']/a//span[@class='ng-binding ng-scope']").nth(0)
+          homename.wait_for()
+
+          teamnames = page.query_selector_all("//div[@class='subeventItem']/a//span[@class='ng-binding ng-scope']")
+          home = teamnames[0].inner_text()
+          away = teamnames[1].inner_text()
+
+          gg_1 = page.locator("//div[@class='odd ng-scope g1']/div[contains(text(), 'GG 1HT')]/following-sibling::div[@class='oddValue ng-binding']")
+          ng_1 = page.locator("//div[@class='odd ng-scope g1']/div[contains(text(), 'NG 1HT')]/following-sibling::div[@class='oddValue ng-binding']")
+          gg_2 = page.locator("//div[@class='odd ng-scope g1']/div[contains(text(), 'GG 2HT')]/following-sibling::div[@class='oddValue ng-binding']")
+          ng_2 = page.locator("//div[@class='odd ng-scope g1']/div[contains(text(), 'NG 2HT')]/following-sibling::div[@class='oddValue ng-binding']")
+
+          gg1 = gg_1.inner_text()
+          ng1 = ng_1.inner_text()
+          gg2 = gg_2.inner_text()
+          ng2 = ng_2.inner_text()
+
+          game = Game(site, home, away, gg1, ng1, gg2, ng2)
+          page.go_back()
+
+          sbgames.append(game)
+
+        for sbgame in sbgames:
+          print(sbgame)
+          print("")
+          print("")
+        #time.sleep(2)
+        browser.close()
+#test_source()
+
+!pytest -v -s test_supabets.py
+
+
+
+%%writefile test_betway.py
+from playwright.sync_api import sync_playwright
+from collections import namedtuple
+import pytest
+import time
+
+def test_bw():
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        context = browser.new_context()
+        page = context.new_page()
+        page.goto("https://www.betway.co.za/sport")
+        home_team = page.locator("//div/label/b").nth(0)
+        home_team.wait_for()
+
+        events_list = page.query_selector_all("//a/label[contains(@class, 'ellips theOtherFont')]")
+        Game = namedtuple('Game', ['site', 'home', 'away', 'GG1', 'NG1', 'GG2', 'NG2'])
+        site = "Betway"
+
+
+        bwgames = []
+        events = events_list[:10]
+        for index in range(0, 10):
+          fixture = page.locator("//a/label[contains(@class, 'ellips theOtherFont')]").nth(0)
+          fixture.wait_for()
+          ev = page.locator("//a/label[contains(@class, 'ellips theOtherFont')]").nth(index)
+          ev.click()
+          teams = page.locator("//span[contains(@class, 'ellipsMultiMarket')]/span[1]")
+          teams.wait_for()
+
+          teamnames = page.query_selector_all("//div[contains(@class, 'outcome-title')]/span")
+          home = teamnames[0].inner_text()
+          away = teamnames[2].inner_text()
+          goals = page.locator("//div/span[contains(text(), 'Goals')]")
+          goals.wait_for()
+          goals.click()
+          time.sleep(5)
+          page.screenshot(path='shot9.png', full_page=True)
+          h1_btts = page.locator("//span[contains(@data-translate-key, '1StHalfBothTeamsToScore')]")
+          h1_btts.wait_for()
+          h1_btts.click()
+          h2_btts = page.locator("//span[contains(@data-translate-key, '2NdHalfBothTeamsToScore')]")
+          h2_btts.wait_for()
+          h2_btts.click()
+          gg_1 = page.locator("//div[contains(@data-markettitle, '1st Half - Both Teams To Score')]//div[contains(@class, 'outcome-pricedecimal')]").nth(0)
+          ng_1 = page.locator("//div[contains(@data-markettitle, '1st Half - Both Teams To Score')]//div[contains(@class, 'outcome-pricedecimal')]").nth(1)
+          gg_2 = page.locator("//div[contains(@data-markettitle, '2nd Half - Both Teams To Score')]//div[contains(@class, 'outcome-pricedecimal')]").nth(0)
+          ng_2 = page.locator("//div[contains(@data-markettitle, '2nd Half - Both Teams To Score')]//div[contains(@class, 'outcome-pricedecimal')]").nth(1)
+
+          gg1 = gg_1.inner_text()
+          ng1 = ng_1.inner_text()
+          gg2 = gg_2.inner_text()
+          ng2 = ng_2.inner_text()
+
+          game = Game(site, home, away, gg1, ng1, gg2, ng2)
+          page.go_back()
+
+          bwgames.append(game)
+
+        for bwgame in bwgames:
+          print(bwgame)
+          print("")
+          print("")
+        #time.sleep(2)
+        browser.close()
+#test_source()
+
+!pytest -v -s test_betway.py
